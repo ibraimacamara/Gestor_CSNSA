@@ -2,6 +2,9 @@
 require_once 'config.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/funcionarios_estado.php';
+require_once __DIR__ . '/biometrico/vendor/autoload.php';
+
+use Rats\Zkteco\Lib\ZKTeco;
 
 $utilizadorSessao = require_login($conn);
 
@@ -84,6 +87,77 @@ function funcionario_tem_dependencias($conn, $funcionarioId)
     return false;
 }
 
+//--------------função inserir funcionarios no terminal----------------
+
+function enviar_funcionario_terminal($funcionarioId, $nome)
+{
+    $ipTerminal = '172.20.10.11';
+    $porta = 4370;
+
+    $zk = null;
+
+    try {
+        $zk = new ZKTeco($ipTerminal, $porta);
+
+        if (!$zk->connect()) {
+            return [
+                'success' => false,
+                'message' => 'Funcionário criado, mas não possível ligar ao terminal'
+            ];
+        }
+        $zk->disableDevice();
+
+        $funcionarioId = (int) $funcionarioId;
+
+        $nomeTerminal = trim($nome);
+        $nomeTerminal = iconv(
+            'UTF-8',
+            'ASCII//TRANSLIT//IGNORE',
+            $nomeTerminal
+        );
+    
+        $zk->setUser(
+            $funcionarioId,
+            (string) $funcionarioId,
+            $nomeTerminal,
+            '',
+            0,
+            0
+        );
+
+        $users = $zk->getUser();
+        $zk->enableDevice();
+        $zk->disconnect();
+
+        return [
+            'success' => isset($users[$funcionarioId]),
+            'message' => isset($users[$funcionarioId])
+                ? 'Funcionário criadoo no sistema e enviado para o terminal.'
+                : 'Funcionário criado no sistema, mas não enviado no terminal.'
+        ];
+    } catch (Throwable $e) {
+        if ($zk !== null) {
+            try {
+                $zk->enableDevice();
+                $zk->disconnect();
+
+            } catch (Throwable $ignore) {
+            }
+        }
+        return [
+            'success' => false,
+            'message' => 'Funcionário criado no sistema, mas houve erro no terminal:' . $e->getMessage()
+        ];
+    }
+}
+//------------------------função editar funcionário no terminal ------------------------------------
+
+
+
+
+
+
+
 $missingTables = [];
 if (!fe_table_exists($conn, 'funcionarios')) {
     $missingTables[] = 'funcionarios';
@@ -101,7 +175,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($acao === 'criar' || $acao === 'editar') {
         $id = (int) ($_POST['id'] ?? 0);
         $nome = get_post_value('nome');
-        $numeroMecanografico = nullable_text($_POST['numero_mecanografico'] ?? '');
         $email = nullable_text($_POST['email'] ?? '');
         $telefone = nullable_text($_POST['telefone'] ?? '');
         $funcao = nullable_text($_POST['funcao'] ?? '');
@@ -112,9 +185,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dataCessacao = nullable_date($_POST['data_cessacao'] ?? '');
         $tipoContrato = nullable_text($_POST['tipo_contrato'] ?? '');
         $cargaHoraria = (float) str_replace(',', '.', $_POST['carga_horaria_semanal'] ?? '40');
-        $pinPonto = nullable_text($_POST['pin_ponto'] ?? '');
-        $codigoCartao = nullable_text($_POST['codigo_cartao'] ?? '');
-        $codigoBiometrico = nullable_text($_POST['codigo_biometrico'] ?? '');
         $estado = get_post_value('estado') ?: 'ativo';
         $observacoes = nullable_text($_POST['observacoes'] ?? '');
 
@@ -137,16 +207,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             if ($acao === 'criar') {
                 $stmt = mysqli_prepare($conn, "INSERT INTO funcionarios
-                    (setor_id, equipa_id, numero_mecanografico, nome, email, telefone, funcao, categoria_profissional,
-                     data_admissao, data_cessacao, tipo_contrato, carga_horaria_semanal, pin_ponto, codigo_cartao,
-                     codigo_biometrico, estado, observacoes)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    (setor_id, equipa_id, nome, email, telefone, funcao, categoria_profissional,
+                     data_admissao, data_cessacao, tipo_contrato, carga_horaria_semanal, estado, observacoes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 mysqli_stmt_bind_param(
                     $stmt,
-                    'iisssssssssdsssss',
+                    'iissssssssdss',
                     $setorId,
                     $equipaId,
-                    $numeroMecanografico,
                     $nome,
                     $email,
                     $telefone,
@@ -156,14 +224,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $dataCessacao,
                     $tipoContrato,
                     $cargaHoraria,
-                    $pinPonto,
-                    $codigoCartao,
-                    $codigoBiometrico,
                     $estado,
                     $observacoes
                 );
                 mysqli_stmt_execute($stmt);
+
+                $funcionarioId = mysqli_insert_id($conn);
                 mysqli_stmt_close($stmt);
+
+                $resultadoTerminal = enviar_funcionario_terminal($funcionarioId, $nome);
+
+                if (!$resultadoTerminal['success']) {
+                    $stmtDelete = mysqli_prepare($conn, "DELETE FROM funcionarios WHERE id= ?");
+                    mysqli_stmt_bind_param($stmtDelete, 'i', $funcionarioId);
+                    mysqli_stmt_execute($stmtDelete);
+                    mysqli_stmt_close($stmtDelete);
+
+                    redirect_with_message(
+                        'danger',
+                        'Erro Crítico: não foi possível registar o funcionário.'
+                    );
+                }
 
                 redirect_with_message('success', 'Funcionário criado com sucesso.');
             }
@@ -173,17 +254,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $stmt = mysqli_prepare($conn, "UPDATE funcionarios SET
-                    setor_id = ?, equipa_id = ?, numero_mecanografico = ?, nome = ?, email = ?, telefone = ?,
+                    setor_id = ?, equipa_id = ?, nome = ?, email = ?, telefone = ?,
                     funcao = ?, categoria_profissional = ?, data_admissao = ?, data_cessacao = ?,
-                    tipo_contrato = ?, carga_horaria_semanal = ?, pin_ponto = ?, codigo_cartao = ?,
-                    codigo_biometrico = ?, estado = ?, observacoes = ?
+                    tipo_contrato = ?, carga_horaria_semanal = ?, estado = ?, observacoes = ?
                 WHERE id = ?");
             mysqli_stmt_bind_param(
                 $stmt,
-                'iisssssssssdsssssi',
+                'iissssssssdssi',
                 $setorId,
                 $equipaId,
-                $numeroMecanografico,
                 $nome,
                 $email,
                 $telefone,
@@ -193,9 +272,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dataCessacao,
                 $tipoContrato,
                 $cargaHoraria,
-                $pinPonto,
-                $codigoCartao,
-                $codigoBiometrico,
                 $estado,
                 $observacoes,
                 $id
@@ -292,7 +368,8 @@ $alertMessage = $_GET['message'] ?? '';
                     </div>
 
                     <?php if ($alertMessage !== ''): ?>
-                        <div class="alert alert-<?php echo e($alertType ?: 'info'); ?> alert-dismissible fade show" role="alert">
+                        <div class="alert alert-<?php echo e($alertType ?: 'info'); ?> alert-dismissible fade show"
+                            role="alert">
                             <?php echo e($alertMessage); ?>
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                         </div>
@@ -300,7 +377,8 @@ $alertMessage = $_GET['message'] ?? '';
 
                     <?php if (!empty($missingTables)): ?>
                         <div class="alert alert-warning" role="alert">
-                            Execute a migration <code>database/2026_05_15_lar_idosos_assiduidade.sql</code> antes de gerir funcionários.
+                            Execute a migration <code>database/2026_05_15_lar_idosos_assiduidade.sql</code> antes de gerir
+                            funcionários.
                         </div>
                     <?php endif; ?>
 
@@ -308,7 +386,8 @@ $alertMessage = $_GET['message'] ?? '';
                         <div class="card-header">
                             <div class="d-flex align-items-center">
                                 <h4 class="card-title">Lista de funcionários</h4>
-                                <button class="btn btn-primary btn-round ms-auto" data-bs-toggle="modal" data-bs-target="#modalCriarFuncionario" <?php echo !empty($missingTables) ? 'disabled' : ''; ?>>
+                                <button class="btn btn-primary btn-round ms-auto" data-bs-toggle="modal"
+                                    data-bs-target="#modalCriarFuncionario" <?php echo !empty($missingTables) ? 'disabled' : ''; ?>>
                                     <i class="fa fa-plus"></i>
                                     Adicionar funcionário
                                 </button>
@@ -319,11 +398,11 @@ $alertMessage = $_GET['message'] ?? '';
                                 <table id="tabela-funcionarios" class="display table table-striped table-hover">
                                     <thead>
                                         <tr>
-                                            <th>N.º mec.</th>
+                                            <th>ID</th>
                                             <th>Nome</th>
                                             <th>Função</th>
                                             <th>Equipa</th>
-                                            <th>Biometria</th>
+                                            <th>Carga Horaria</th>
                                             <th>Estado</th>
                                             <th style="width: 120px">Ações</th>
                                         </tr>
@@ -331,25 +410,33 @@ $alertMessage = $_GET['message'] ?? '';
                                     <tbody>
                                         <?php foreach ($funcionarios as $funcionario): ?>
                                             <tr>
-                                                <td><?php echo e($funcionario['numero_mecanografico'] ?: '-'); ?></td>
+                                                <td><?php echo e($funcionario['id'] ?: '-'); ?></td>
                                                 <td>
                                                     <div class="fw-bold"><?php echo e($funcionario['nome']); ?></div>
-                                                    <small class="text-muted"><?php echo e($funcionario['email'] ?: $funcionario['telefone'] ?: 'Sem contacto'); ?></small>
+                                                    <small
+                                                        class="text-muted"><?php echo e($funcionario['email'] ?: $funcionario['telefone'] ?: 'Sem contacto'); ?></small>
                                                 </td>
                                                 <td><?php echo e($funcionario['funcao'] ?: '-'); ?></td>
                                                 <td><?php echo e($funcionario['equipa_nome'] ?: '-'); ?></td>
-                                                <td><?php echo e($funcionario['codigo_biometrico'] ?: '-'); ?></td>
+                                                <td><?php echo e($funcionario['carga_horaria_semanal'] ?: '-'); ?></td>
                                                 <td>
-                                                    <span class="badge badge-<?php echo e(funcionario_estado_badge($funcionario['estado'])); ?>">
+                                                    <span
+                                                        class="badge badge-<?php echo e(funcionario_estado_badge($funcionario['estado'])); ?>">
                                                         <?php echo e(ucfirst($funcionario['estado'])); ?>
                                                     </span>
                                                 </td>
                                                 <td>
                                                     <div class="form-button-action">
-                                                        <button type="button" class="btn btn-link btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#modalEditarFuncionario<?php echo (int) $funcionario['id']; ?>" title="Editar">
+                                                        <button type="button" class="btn btn-link btn-primary btn-lg"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalEditarFuncionario<?php echo (int) $funcionario['id']; ?>"
+                                                            title="Editar">
                                                             <i class="fa fa-edit"></i>
                                                         </button>
-                                                        <button type="button" class="btn btn-link btn-danger" data-bs-toggle="modal" data-bs-target="#modalRemoverFuncionario<?php echo (int) $funcionario['id']; ?>" title="Remover">
+                                                        <button type="button" class="btn btn-link btn-danger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#modalRemoverFuncionario<?php echo (int) $funcionario['id']; ?>"
+                                                            title="Remover">
                                                             <i class="fa fa-times"></i>
                                                         </button>
                                                     </div>
@@ -410,7 +497,8 @@ $alertMessage = $_GET['message'] ?? '';
     </div>
 
     <?php foreach ($funcionarios as $funcionario): ?>
-        <div class="modal fade" id="modalEditarFuncionario<?php echo (int) $funcionario['id']; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalEditarFuncionario<?php echo (int) $funcionario['id']; ?>" tabindex="-1"
+            aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
                 <form method="post" class="modal-content needs-validation" novalidate>
                     <input type="hidden" name="acao" value="editar">
@@ -435,7 +523,8 @@ $alertMessage = $_GET['message'] ?? '';
             </div>
         </div>
 
-        <div class="modal fade" id="modalRemoverFuncionario<?php echo (int) $funcionario['id']; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="modalRemoverFuncionario<?php echo (int) $funcionario['id']; ?>" tabindex="-1"
+            aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <form method="post" class="modal-content">
                     <input type="hidden" name="acao" value="remover">
@@ -447,7 +536,9 @@ $alertMessage = $_GET['message'] ?? '';
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p class="mb-0">Tem a certeza que pretende remover <strong><?php echo e($funcionario['nome']); ?></strong>?</p>
+                        <p class="mb-0">Tem a certeza que pretende remover
+                            <strong><?php echo e($funcionario['nome']); ?></strong>?
+                        </p>
                     </div>
                     <div class="modal-footer border-0">
                         <button type="submit" class="btn btn-danger">Remover</button>
@@ -491,4 +582,3 @@ $alertMessage = $_GET['message'] ?? '';
 </body>
 
 </html>
-

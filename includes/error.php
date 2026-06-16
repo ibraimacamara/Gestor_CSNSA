@@ -19,7 +19,7 @@ function guardarErro($mensagem)
 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
     guardarErro("ERRO: $errstr em $errfile na linha $errline");
 
-    header("Location: /Gestor-de-Presen-as-Centro-Social-Nossa-Senhora-Auxiliadora/404.php");
+    header("Location: /Gestor_CSNSA/404.php");
     exit;
 });
 
@@ -29,7 +29,7 @@ set_exception_handler(function ($exception) {
         . " em " . $exception->getFile()
         . " na linha " . $exception->getLine()
     );
-    header("Location: /Gestor-de-Presen-as-Centro-Social-Nossa-Senhora-Auxiliadora/404.php");
+    header("Location: /Gestor_CSNSA/404.php");
 
     exit;
 });
@@ -45,7 +45,7 @@ register_shutdown_function(function () {
         );
 
         if (!headers_sent()) {
-            header("Location: /Gestor-de-Presen-as-Centro-Social-Nossa-Senhora-Auxiliadora/404.php");
+            header("Location: /Gestor_CSNSA/404.php");
 
             exit;
         }

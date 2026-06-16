@@ -12,7 +12,7 @@ if (!$zk->connect()) {
 
 echo "<h3>Ligado ao terminal</h3>";
 
-$zk->disableDevice();
+$zk->disableDevice(); //função responsavel para bloquiar td ativadadi no terminal para evitar conflito
 
 $resultado = $zk->setUser(
     2,          // uid interno
@@ -23,7 +23,7 @@ $resultado = $zk->setUser(
     0           // cartão
 );
 
-var_dump($resultado);
+var_dump($resultado); // server para ver se setUser devolveu true ou false
 
 $users = $zk->getUser();
 

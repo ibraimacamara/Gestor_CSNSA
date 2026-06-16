@@ -10,3 +10,40 @@
 [2026-06-01 09:51:44] EXEÇÃO: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`gestor_assiduidade`.`registos_ponto`, CONSTRAINT `fk_registos_ponto_funcionario` FOREIGN KEY (`funcionario_id`) REFERENCES `funcionarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE) em C:\xampp\htdocs\Gestor-de-Presen-as-Centro-Social-Nossa-Senhora-Auxiliadora\biometrico\enviar_dado_db.php na linha 94
 [2026-06-01 09:52:13] EXEÇÃO: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`gestor_assiduidade`.`registos_ponto`, CONSTRAINT `fk_registos_ponto_funcionario` FOREIGN KEY (`funcionario_id`) REFERENCES `funcionarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE) em C:\xampp\htdocs\Gestor-de-Presen-as-Centro-Social-Nossa-Senhora-Auxiliadora\biometrico\enviar_dado_db.php na linha 94
 [2026-06-01 09:52:14] EXEÇÃO: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`gestor_assiduidade`.`registos_ponto`, CONSTRAINT `fk_registos_ponto_funcionario` FOREIGN KEY (`funcionario_id`) REFERENCES `funcionarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE) em C:\xampp\htdocs\Gestor-de-Presen-as-Centro-Social-Nossa-Senhora-Auxiliadora\biometrico\enviar_dado_db.php na linha 94
+[2026-06-03 14:14:35] ERRO: Function utf8_encode() is deprecated em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\User.php na linha 94
+[2026-06-12 10:39:11] ERRO: socket_recvfrom(): Unable to recvfrom [10060]: Uma tentativa de ligação falhou porque o componente ligado não respondeu
+corretamente após um período de tempo, ou a ligação estabelecida falhou
+porque o anfitrião ligado não respondeu em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 31
+[2026-06-12 10:41:10] EXEÇÃO: Nenhuma ligação pôde ser feita porque o computador de destino
+as recusou ativamente em C:\xampp\htdocs\Gestor_CSNSA\config.php na linha 10
+[2026-06-12 10:41:25] EXEÇÃO: Nenhuma ligação pôde ser feita porque o computador de destino
+as recusou ativamente em C:\xampp\htdocs\Gestor_CSNSA\config.php na linha 10
+[2026-06-12 10:41:34] EXEÇÃO: Nenhuma ligação pôde ser feita porque o computador de destino
+as recusou ativamente em C:\xampp\htdocs\Gestor_CSNSA\config.php na linha 10
+[2026-06-12 10:50:41] EXEÇÃO: Nenhuma ligação pôde ser feita porque o computador de destino
+as recusou ativamente em C:\xampp\htdocs\Gestor_CSNSA\config.php na linha 10
+[2026-06-12 10:51:12] EXEÇÃO: Nenhuma ligação pôde ser feita porque o computador de destino
+as recusou ativamente em C:\xampp\htdocs\Gestor_CSNSA\config.php na linha 10
+[2026-06-12 10:54:39] ERRO: Undefined array key "carga_horaria" em C:\xampp\htdocs\Gestor_CSNSA\funcionarios.php na linha 327
+[2026-06-12 10:54:39] ERRO FATAL: Cannot modify header information - headers already sent by (output started at C:\xampp\htdocs\Gestor_CSNSA\includes\sidebar.php:69) em C:\xampp\htdocs\Gestor_CSNSA\includes\error.php em linha 22
+[2026-06-15 12:59:45] ERRO: Undefined variable $funcionario em C:\xampp\htdocs\Gestor_CSNSA\funcionarios.php na linha 224
+[2026-06-15 13:01:35] ERRO: Undefined variable $funcionario em C:\xampp\htdocs\Gestor_CSNSA\funcionarios.php na linha 224
+[2026-06-15 13:02:26] ERRO: Undefined variable $funcionario em C:\xampp\htdocs\Gestor_CSNSA\funcionarios.php na linha 224
+[2026-06-15 13:03:51] ERRO: socket_sendto(): Host lookup failed [11001]: Este anfitrião não é conhecido em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 28
+[2026-06-15 13:13:26] ERRO: socket_recvfrom(): Unable to recvfrom [10060]: Uma tentativa de ligação falhou porque o componente ligado não respondeu
+corretamente após um período de tempo, ou a ligação estabelecida falhou
+porque o anfitrião ligado não respondeu em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 31
+[2026-06-15 13:18:27] ERRO: socket_recvfrom(): Unable to recvfrom [10060]: Uma tentativa de ligação falhou porque o componente ligado não respondeu
+corretamente após um período de tempo, ou a ligação estabelecida falhou
+porque o anfitrião ligado não respondeu em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 31
+[2026-06-15 13:28:48] ERRO: socket_recvfrom(): Unable to recvfrom [10060]: Uma tentativa de ligação falhou porque o componente ligado não respondeu
+corretamente após um período de tempo, ou a ligação estabelecida falhou
+porque o anfitrião ligado não respondeu em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 31
+[2026-06-15 15:06:31] ERRO: Function utf8_encode() is deprecated em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\User.php na linha 94
+[2026-06-15 15:35:59] ERRO: socket_recvfrom(): Unable to recvfrom [10060]: Uma tentativa de ligação falhou porque o componente ligado não respondeu
+corretamente após um período de tempo, ou a ligação estabelecida falhou
+porque o anfitrião ligado não respondeu em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 31
+[2026-06-15 15:42:39] ERRO: socket_recvfrom(): Unable to recvfrom [10060]: Uma tentativa de ligação falhou porque o componente ligado não respondeu
+corretamente após um período de tempo, ou a ligação estabelecida falhou
+porque o anfitrião ligado não respondeu em C:\xampp\htdocs\Gestor_CSNSA\biometrico\vendor\rats\zkteco\src\Lib\Helper\Connect.php na linha 31
+    
